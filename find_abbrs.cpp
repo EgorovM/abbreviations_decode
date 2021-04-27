@@ -22,10 +22,10 @@ void initAbbr()
 }
 
 std::vector<std::string> readParts(){
-    rapidcsv::Document doc("../miac/data/subparts_ariadna_norm_head.csv", rapidcsv::LabelParams(0, 0),
+    rapidcsv::Document doc("anamnesis.csv", rapidcsv::LabelParams(0, 0),
                         rapidcsv::SeparatorParams('\t'));
 
-    std::vector<std::string> col = doc.GetColumn<std::string>("norm_part");
+    std::vector<std::string> col = doc.GetColumn<std::string>("anamnesis");
 
     return col;
 }
@@ -75,7 +75,7 @@ int main(){
     }
 
     std::ofstream myfile;
-    myfile.open ("term_indexes.csv");
+    myfile.open ("DISEASE ANAMNESIS/term_indexes.csv");
 
     for(int i = 0; i < termIndex.size(); i++){
         myfile << termIndex[i].first << ";" << termIndex[i].second << "\n";
