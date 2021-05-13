@@ -1,9 +1,18 @@
 import re
 
+from abbreviation_predictor import AbbreviationPredictor
+
+
 class AbbreviationExtractor:
-    def __init__(self, base_corpus=None):
+    def __init__(self, base_corpus=None, abbr_predictor=None):
         self._base_corpus = base_corpus
         self._abbreviations = None
+        
+        if abbr_predictor:
+            assert isinstance(abbr_predictor, AbbreviationPredictor)
+            
+        self._abbr_predictor = abbr_predictor
+        
         self._init_abbreviations()
         
     def _init_abbreviations(self):
@@ -11,6 +20,12 @@ class AbbreviationExtractor:
             self._abbreviations = self._naive_extract_abbreviation(
                 " ".join(self._base_corpus)
             )
+            
+    def upload_abbreviations(self, abbr_set):
+        self._abbreviations = abbr_set
+        
+    def update_abbreviations(self, abbr_set):
+        self._abbreviations += abbr_set
     
     @property
     def has_base_corpus(self):
@@ -20,7 +35,7 @@ class AbbreviationExtractor:
         """
         Будем считать аббревиатурами слова, половина букв которого - заглавные
 
-        Уберем случаи, когда это может инициалы сотрудника
+        Уберем случаи, когда слово может быть инициалом сотрудника
         """
 
         # убрать инициалы
@@ -33,8 +48,9 @@ class AbbreviationExtractor:
 
     def _clean_abbr(self, word):
         """
-        Убираем все символы кроме буквенных, точки и тире
+        Убираем все символы кроме буквенных, а также точки и тире в начале и в конце
         """
+        
         word = re.sub(r'[^A-ZА-Яа-я-a-z-\.]', '', word)
 
 
@@ -47,6 +63,10 @@ class AbbreviationExtractor:
         return word.upper()
 
     def _naive_extract_abbreviation(self, text):
+        """
+        Достаем из текста слова, которые соответствуют функции is_abbreviation
+        """
+        
         text = text.replace(',', ' ')
         abbrs = filter(lambda word: self.is_abbreviation(word), text.split())
         abbrs = map(self._clean_abbr, abbrs)
@@ -54,6 +74,9 @@ class AbbreviationExtractor:
         return list(abbrs)
 
     def _split_abbreviations(self, abbr, abbr_set):
+        """
+        Разделить самодостаточные аббревиатуры по знакам препинания
+        """
         # Если без знаков препинания является аббревиатурой
         # ЭХО-КГ -> ЭХОКГ
         if re.sub(r'[\.|-]', '', abbr) in abbr_set:
@@ -76,9 +99,10 @@ class AbbreviationExtractor:
 
         return [abbr]
     
-    def extract_abbreviations(self, text, to_replace=False):    
-        replace_dict = {}
+    def extract_abbreviations(self, text, filter_abbr=False):   
+        """
         
+        """
         abbreviations = self._naive_extract_abbreviation(text)
         abbr_set = self._abbreviations or set(abbreviations) 
         
@@ -87,11 +111,14 @@ class AbbreviationExtractor:
         for abbr in abbreviations:
             splitted_abbrs = self._split_abbreviations(abbr, abbr_set)
             items.extend(splitted_abbrs)
-            
-            if to_replace:
-                replace_dict[abbr] = " ".join(splitted_abbrs)
-        
-        if to_replace:
-            return replace_dict
+
+        if filter_abbr:
+            items = self.filter_abbreviations(items)
         
         return items
+    
+    def filter_abbreviations(self, abbreviations):
+        if self._abbr_predictor:
+            return list(filter(self._abbr_predictor.predict, abbreviations))
+        else:
+            raise ValueError('Предиктор не задан')
