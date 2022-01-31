@@ -40,7 +40,7 @@ class DictVoter(AbbreviationPredictor):
         self._set_of_word = set_of_word
         
     def predict(self, word):
-        return not word in self._set_of_word
+        return not word.lower() in self._set_of_word
     
 
 class VotingAbbreviationClassifier(AbbreviationPredictor):
