@@ -31,9 +31,10 @@ class EntropyVoter(AbbreviationPredictor):
         except:
             return False
     
+    
 class DictVoter(AbbreviationPredictor):
     def __init__(self, set_of_word: set):
-        if not isinstance(set_of_words, set):
+        if not isinstance(set_of_word, set):
             warnings.warn('лучше передать set для скорости работы', Warning)
             
         self._set_of_word = set_of_word
